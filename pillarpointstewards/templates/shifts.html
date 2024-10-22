@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}{{ team }}: All shifts{% endblock %}
+
+{% block content %}
+<section class="page-title">
+  <div class="title-wrapper stretch">
+    <h1 class="text"><span>{{ team }}</span></h1>
+    <div class="page-controls">
+      {% if request.user.is_authenticated %}
+        <a class="loginout" href="/logout/">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg> Logout</a>
+      {% else %}
+        <a class="loginout" href="/login/">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg> Login</a>
+      {% endif %}
+    </div>
+  </div>
+</section> <!-- end .page-title -->
+
+<section class="content">
+  <div class="primary">
+    <h2>All shifts</h2>
+    
+
+    <ol class="shifts">
+      {% for shift in shifts %}
+        <li class="shift">
+            <h3 class="date date-{{ shift.fullness }}" title="{{ shift.shift_start.date }}">
+              <a href="{{ shift.get_absolute_url }}" class="shift-link">
+                <span class="day">{{ shift.shift_start|date:"jS" }}</span>
+                <span class="month">{{ shift.shift_start|date:"F" }}</span>
+              </a>
+            </h3>
+            <p class="shifttimes"><a href="{{ shift.get_absolute_url }}">Shift from {{ shift.shift_start|date:"g:iA"|lower }} to {{ shift.shift_end|date:"g:iA"|lower }}</a> {{ shift.shift_start|date:"D" }}&nbsp;{{ shift.shift_start|date:"jS" }} {{ shift.shift_start|date:"F" }}&nbsp;{{ shift.shift_start|date:"Y" }}</p>
+            {% if shift.mllw_feet %}
+              <p class="lowtide"><strong>Low tide:</strong> {{ shift.mllw_feet }}ft at {{ shift.lowest_tide|date:"g:iA"|lower }}</p>
+            {% endif %}
+            {% if shift.stewards.all %}
+              <p class="stewards"><strong>Stewards <em>({{ shift.stewards.count }}{% if shift.target_stewards %}/{{ shift.target_stewards }}{% endif %})</em>:</strong>
+                {% for steward in shift.stewards.all %}{{ steward }} {% if not forloop.last %}, {% endif %}{% endfor %}
+              </p>
+            {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </div>
+
+  <div class="secondary pull-out">
+    <h2>Key</h2>
+    <ul class="calkey">
+      <li class="available">volunteers needed</li> <li class="partfull">partly full shift</li> <li class="full">fully staffed shift</li>
+    </ul>
+  
+  </div> <!-- end .secondary -->
+
+</section>
+
+
+
+{% endblock %}

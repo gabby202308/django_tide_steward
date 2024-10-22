@@ -1,0 +1,40 @@
+<div class="dropdown-block"> <!-- TODO this needs aria support for accessibility once JS is added-->
+  <!-- <h2 class="dropdown-title"><a href="#">Shifts Overview</a></h2> -->
+  <h2 class="dropdown-title">Shifts Overview</h2>
+  <div class="dropdown-content">
+    <p>In addition to <strong>{{ num_confirmed_shifts }} confirmed shift{{ num_confirmed_shifts|pluralize }}</strong>, there are <strong>{{ num_suggested_shifts }} suggested shift{{ num_suggested_shifts|pluralize }}</strong> over the next 365 days based on your shift rules</p>
+    <!-- <div class="year-view"> TODO </div> -->
+    <p>Your settings and confirmed shifts have yielded <strong>{{ num_combined_shifts }} shift{{ num_combined_shifts|pluralize }}</strong>, the average shift length is <strong>1 hour and 4 mins</strong>. The shortest shift is <strong>30 mins</strong> and the longest is <strong>2 hours</strong>. These shift lengths vary due to how close the low tide is to darkness hours, You said that shifts start <strong>1 hour after <a href="https://forecast.weather.gov/glossary.php?word=DAWN#:~:text=Civil%20Dawn">civil dawn</a></strong> and the latest shift ends at <a href="https://forecast.weather.gov/glossary.php?word=dusk#:~:text=Civil%20Dusk">civil dusk</a>.</p>
+    <!-- <p>To cover all the shifts over the year with <strong>2 stewards</strong> per shift on weekend low tides of <strong>0ft</strong>, <strong>1 steward</strong> on weekday low tides of <strong>-1ft</strong> with an additional <strong>2 stewards</strong> on super low tides of <strong>-2ft</strong>, assuming you want stewards to do on average <strong>3 shifts a year</strong>: you will need to have <strong>XXX active stewards</strong>.</p> -->
+  </div>
+</div>
+<details style="margin-top: 1em; margin-bottom: 1em">
+  <summary>Add a shift without using the calculator</summary>
+  <form style="margin-top: 1em" action="/programs/{{ team.slug }}/add-manual-shift/" method="POST">{% csrf_token %}
+<div class="input-container">
+  <label for="day">Date</label>
+  <input type="date" name="day" id="day">
+</div>
+<div class="input-container">
+  <label for="shift_start_time">Start time</label>
+  <input type="time" name="shift_start_time" id="shift_start_time">
+</div>
+<div class="input-container">
+  <label for="shift_end_time">End time</label>
+  <input type="time" name="shift_end_time" id="shift_end_time">
+</div>
+<div class="input-container">
+  <label for="description">Shift description</label>
+  <input type="text" id="description" name="description">
+  <p class="meta">Optional, e.g. "beach cleanup"</p>
+</div>
+<div class="input-container ">
+  <label for="target_stewards">Stewards</label>
+  <input type="number" name="target_stewards" min="1" value="1">
+  <p class="meta">Number of stewards needed</p>
+</div>
+<div class="input-container">
+  <input type="submit" value="Add shift">
+</div>
+</details>
+</form>

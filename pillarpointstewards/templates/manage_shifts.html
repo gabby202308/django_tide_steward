@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Manage upcoming shifts for {{ team.name }}{% endblock %}
+
+{% block content %}
+<section class="page-title">
+  <div class="title-wrapper stretch">
+    <h1 class="text"><span>Manage upcoming shifts for {{ team.name }}</span></h1>
+  </div>
+</section> <!-- end .page-title -->
+<section class="content">
+  <div class="primary">
+    <div id="calculator-results">Loading...</div>
+  </div>
+  <div class="secondary">
+    <form id="calculator-form">
+      <!-- Weekday low tide -->
+      <div class="input-container block-container">
+        <label for="weekday-low-tide">Weekday low tide (ft)</label>
+        <input type="number" value="{{ calculator_settings.weekday_low_tide }}" min="-2" max="8" step="0.05" name="weekday-low-tide">
+        <input type="range" value="{{ calculator_settings.weekday_low_tide }}" min="-2" max="8" step="0.05" name="range_weekday-low-tide">
+      </div>
+      <!-- Weekend low tide -->
+      <div class="input-container block-container">
+        <label for="weekend-low-tide">Weekend low tide (ft)</label>
+        <input type="number" value="{{ calculator_settings.weekend_low_tide }}" min="-2" max="8" step="0.05" name="weekend-low-tide">
+        <input type="range" value="{{ calculator_settings.weekend_low_tide }}" min="-2" max="8" step="0.05" name="range_weekend-low-tide">
+      </div>
+      <!-- Super low tide (ft) must be lower than both above
+      <div class="input-container block-container">
+        <label for="super-low-tide">Super low tide (ft)</label>
+        <input type="number" value="{{ calculator_settings.super_low_tide }}" min="-2" max="8" step="0.05" name="super-low-tide">
+        <input type="range" value="{{ calculator_settings.super_low_tide }}" min="-2" max="8" step="0.05" name="range_super-low-tide">
+      </div> -->
+      <!-- Shift buffer before -->
+      <div class="input-container block-container">
+        <label for="shift-buffer-before">Shift minutes before low tide</label>
+        <input type="number" value="{{ calculator_settings.shift_buffer_before }}" min="0" max="180" step="15" name="shift-buffer-before">
+        <input type="range" value="{{ calculator_settings.shift_buffer_before }}" min="0" max="180" step="15" name="range_shift-buffer-before">
+      </div>
+      <!-- Shift buffer after -->
+      <div class="input-container block-container">
+        <label for="shift-buffer-after">Shift minutes after low tide</label>
+        <input type="number" value="{{ calculator_settings.shift_buffer_after }}" min="0" max="180" step="15" name="shift-buffer-after">
+        <input type="range" value="{{ calculator_settings.shift_buffer_after }}" min="0" max="180" step="15" name="range_shift-buffer-after">
+      </div>
+      <!-- People per regular shift -->
+      <div class="input-container block-container">
+        <label for="people-per-regular-shift">People per shift</label>
+        <input type="number" value="{{ calculator_settings.people_per_regular_shift }}" min="1" max="15" step="1" name="people-per-regular-shift">
+        <input type="range" value="{{ calculator_settings.people_per_regular_shift }}" min="1" max="15" step="1" name="range_people-per-regular-shift">
+      </div>
+      <!-- People per super-low shift
+      <div class="input-container block-container">
+        <label for="people-per-super-low-shift">People per super-low shift</label>
+        <input type="number" value="{{ calculator_settings.people_per_super_low_shift }}" min="1" max="15" step="1" name="people-per-super-low-shift">
+        <input type="range" value="{{ calculator_settings.people_per_super_low_shift }}" min="1" max="15" step="1" name="range_people-per-super-low-shift">
+      </div> -->
+      <!-- Earliest shift time buffer -->
+      <div class="input-container block-container">
+        <label for="earliest-shift-time-buffer">Earliest minutes after sunrise</label>
+        <input type="number" value="{{ calculator_settings.earliest_shift_time_buffer }}" min="0" max="180" step="15" name="earliest-shift-time-buffer">
+        <input type="range" value="{{ calculator_settings.earliest_shift_time_buffer }}" min="0" max="180" step="15" name="range_earliest-shift-time-buffer">
+        <p class="meta">Treat the start of the day as this many minutes past sunrise, to avoid sending people out for shifts that start in the dark.</p>
+      </div>
+      <!-- Shifts end no later than -->
+      <div class="input-container block-container">
+        <label for="shortest-shift-duration">Shifts end no later than this time</label>
+        <input type="time" value="{{ calculator_settings.latest_shift_end_time }}" name="latest-shift-end-time">
+        <p class="meta">Optional, for example if shifts should never keep people out past 4pm</p>
+      </div>
+      <!-- Shortest shift duration -->
+      <div class="input-container block-container">
+        <label for="shortest-shift-duration">No shifts shorter than x minutes</label>
+        <input type="number" value="{{ calculator_settings.shortest_shift_duration }}" min="0" max="360" step="15" name="shortest-shift-duration">
+        <input type="range" value="{{ calculator_settings.shortest_shift_duration }}" min="0" max="360" step="15" name="range_shortest-shift-duration">
+      </div>
+      <!-- Save button -->
+      <div class="input-container">
+        <button type="button" id="save-settings" class="button">Update team defaults</button>
+      </div>
+    </form>
+    <div id="export-results" style="display: none">
+      <h3>Export results</h3>
+      <p><textarea style="width: 100%; height: 6em"></textarea></p>
+      <p><label style="font-size: 0.75em"><input id="includeEmptyDates" type="checkbox" checked onchange="updateExport()"> Include dates with no shifts</label></p>
+      <p><button onclick="
+        document.querySelector('#export-results textarea').select();
+        document.execCommand('copy');"
+      >Copy to clipboard</button></p>
+      <p class="meta">Copy and paste this into Google Sheets or Excel </p>
+    </div>
+  </div>
+</section>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Listen to input events on all input and range elements
+    document.querySelectorAll('input[type="number"],input[type="range"]').forEach(function(input) {
+        input.addEventListener('input', function() {
+            let matchedInput;
+            if (input.type === "number") {
+                // If this is a number input, find the corresponding range input by prefixing the name with "range_"
+                matchedInput = document.querySelector(`input[name="range_${input.name}"]`);
+            } else if (input.type === "range") {
+                // If this is a range input, find the corresponding number input by removing the "range_" prefix from the name
+                const numberName = input.name.replace("range_", "");
+                matchedInput = document.querySelector(`input[name="${numberName}"]`);
+            }
+            if (matchedInput) {
+                matchedInput.value = input.value;
+            }
+        });
+    });
+    // Start monitoring the form
+    setInterval(() => monitorForm(document.querySelector('#calculator-form')), 1000);
+
+    // Save settings button functionality
+    const saveButton = document.querySelector('#save-settings');
+    saveButton.addEventListener('click', function() {
+        const formData = new FormData(document.querySelector('#calculator-form'));
+        const data = Object.fromEntries(formData.entries());
+        const originalText = saveButton.innerText;
+        saveButton.innerText = 'Updating defaults...';
+        fetch('/programs/{{ team.slug }}/save-calculator-settings/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                saveButton.innerText = 'Defaults updated!';
+                setTimeout(() => {
+                  saveButton.innerText = originalText;
+                }, 1000);
+            } else {
+                alert('Failed to update defaults.');
+                saveButton.innerText = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
+});
+
+function serializeNumbers(formElement) {
+    let data = {};
+    // Iterate over all the number input fields
+    formElement.querySelectorAll('input[type="number"]').forEach(input => {
+        data[input.name] = parseFloat(input.value);
+    });
+    // And the time fields
+    formElement.querySelectorAll('input[type="time"]').forEach(input => {
+        data[input.name] = input.value;
+    });
+    return JSON.stringify(data);
+}
+let previousSerialization = "";
+let previousAbortController = null;
+
+function monitorForm(formElement) {
+    const currentSerialization = serializeNumbers(formElement);
+    // Check if the serialization has changed since the last check
+    if (currentSerialization !== previousSerialization) {
+        if (previousAbortController) {
+            console.log('Aborting previous request');
+            previousAbortController.abort();
+        }
+        let abortController = new AbortController();
+        previousAbortController = abortController;
+        if (document.querySelector('#calculator-results form')) {
+          document.querySelector('#calculator-results').style.opacity = 0.3;
+        }
+        document.querySelector('#calculator-results').style.pointerEvents = 'none';
+        fetch('/programs/{{ program_slug }}/manage-shifts/calculator/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: currentSerialization,
+            signal: abortController.signal,
+        })
+        .then(response => {
+            previousAbortController = null;
+            return response.json(); 
+        })
+        .then(data => {
+            let html = data.results.map(result => result.html).join('\n');
+            document.querySelector('#calculator-results').innerHTML = data.top_block + html;
+            document.querySelector('#calculator-results').style.opacity = 1;
+            document.querySelector('#calculator-results').style.pointerEvents = 'auto';
+            htmx.process(document.querySelector('#calculator-results'));
+            // And update the copy-paste export
+            window.lastResults = data.results;
+            updateExport();
+        })
+        .catch(error => {
+            console.error('Error fetching:', error);
+        });
+        previousSerialization = currentSerialization;
+    }
+}
+
+function updateExport() {
+    const includeEmptyDates = document.querySelector('#includeEmptyDates').checked;
+    const results = window.lastResults;
+    const tsv = convertToTsv(results, includeEmptyDates);
+    document.querySelector('#export-results textarea').value = tsv;
+    document.querySelector('#export-results').style.display = 'block';
+}
+
+function convertToTsv(results, includeEmptyDates) {
+    const tsvRows = ["Date\tDay\tTime In\tTime Out"];
+    let resultsByDay = {};
+    results.forEach((shift) => {
+        const shiftStart = new Date(shift.shift_start);
+        const date = `${shiftStart.getMonth() + 1}/${shiftStart.getDate()}/${shiftStart.getFullYear()}`;
+        if (!resultsByDay[date]) {
+            resultsByDay[date] = [];
+        }
+        resultsByDay[date].push(shift);
+    });
+    // One TSV line for each date
+    let dates = [];
+    if (includeEmptyDates) {
+        const firstDate = new Date(results[0].shift_start);
+        const lastDate = new Date(results[results.length - 1].shift_start);
+        for (
+            let date = new Date(firstDate);
+            date <= lastDate;
+            date.setDate(date.getDate() + 1)
+        ) {
+            dates.push(
+                `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`,
+            );
+        }
+    } else {
+        dates = Object.keys(resultsByDay);
+    }
+    for (let dateString of dates) {
+        if (!resultsByDay[dateString]) {
+            const date = new Date(dateString);
+            tsvRows.push(
+                `${dateString}\t${date.toLocaleString("default", { weekday: "short" })}\t\t`,
+            );
+        } else {
+            resultsByDay[dateString].forEach((shift) => {
+                const shiftStart = new Date(shift.shift_start);
+                const shiftEnd = new Date(shift.shift_end);
+                const date = `${shiftStart.getMonth() + 1}/${shiftStart.getDate()}/${shiftStart.getFullYear()}`;
+                const day = shiftStart.toLocaleString("default", {
+                    weekday: "short",
+                });
+                const timeIn =
+                    shiftStart.getHours() * 100 + shiftStart.getMinutes();
+                const timeOut =
+                    shiftEnd.getHours() * 100 + shiftEnd.getMinutes();
+                tsvRows.push(`${date}\t${day}\t${timeIn}\t${timeOut}`);
+            });
+        }
+    }
+    return tsvRows.join("\n");
+}
+
+</script>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% load static %}{% load django_htmx %}<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>{% block title %}{{ team.name }} Tidepool Stewards{% endblock %}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="apple-touch-icon" sizes="180x180" href="{% static "apple-touch-icon.png" %}">
+<link rel="icon" type="image/png" sizes="32x32" href="{% static "favicon-32x32.png" %}">
+<link rel="icon" type="image/png" sizes="16x16" href="{% static "favicon-16x16.png" %}">
+<link rel="mask-icon" href="{% static "safari-pinned-tab.svg" %}" color="#0a4b7d">
+<meta name="msapplication-TileColor" content="#0a4b7d">
+<meta name="theme-color" content="#ffffff">
+<link rel="stylesheet" href="{% static "main.css" %}">
+{% block extra_head %}{% endblock %}
+<!-- avoid flash of giant unstyled SVGs on page load: -->
+<style>svg { width: 1px; height: 1px }</style>
+<script src="{% static "htmx.min.js" %}" defer></script>{% django_htmx_script %}
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<header class="section{% if team.slug %} header-team-{{ team.slug }}{% endif %}">
+  <div class="stretch">
+    <a href="/" class="title-link"><h1 class="title"><span class="location">{{ team.name }}</span> <em>Tidepool Stewards</em></h1></a>
+  </div>
+</header> <!-- end header -->
+
+<div class="page{% if team.slug %} page-team-{{ team.slug }}{% endif %}">{% block content %}{% endblock %}</div>
+
+</body>
+</html>
