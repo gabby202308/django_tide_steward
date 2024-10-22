@@ -1,0 +1,8 @@
+Pipfile
+pillarpointstewards/static-root
+__pycache__
+.coverage
+.vscode
+.DS_Store
+.env
+venv
