@@ -1,0 +1,17 @@
+#F7941D orange 247,148,29
+#eb8d1c dark orange 
+#EBBE2D yellow
+#0A4B7D blue
+#84a5be lightblue
+#c8d6e2 lighterblue
+
+#3494CC link blue
+
+
+#9ACD31 green
+#92c32f dark green
+#EB1C1C red
+
+#E6E6E6 pale grey 
+#B0B0B0 dark gray 
+#a7a7a7 darker gray
